@@ -1,0 +1,11 @@
+---
+# handlers file for MicroJoe.prosody
+- name: reload prosody config
+  service:
+    name: prosody
+    state: reloaded
+
+- name: restart prosody
+  service:
+    name: prosody
+    state: restarted

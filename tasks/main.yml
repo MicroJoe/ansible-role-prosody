@@ -1,0 +1,51 @@
+---
+# tasks file for MicroJoe.prosody
+
+- name: Install prosody package key
+  apt_key:
+    url: "https://prosody.im/files/prosody-debian-packages.key"
+    state: present
+
+- name: Add prosody repository
+  apt_repository:
+    repo: deb https://packages.prosody.im/debian jessie main
+    state: present
+    update_cache: yes
+
+- name: Install prosody package
+  apt:
+    name: prosody
+    state: present
+
+- name: Configure prosody
+  template:
+    src: prosody.cfg.lua.j2
+    dest: /etc/prosody/prosody.cfg.lua
+    group: root
+    owner: root
+    mode: 0755
+    validate: "luac -p %s"
+  notify: reload prosody config
+
+# TODO: Add a crontab entry to copy the certs periodically
+
+- name: Copy TLS cert to /etc/prosody/certs/
+  command: /bin/cp "{{ prosody_ssl_cert_source }}" "{{ prosody_ssl_cert_dest }}"
+  notify: reload prosody config
+
+- name: Copy TLS key to /etc/prosody/certs/
+  command: /bin/cp "{{ prosody_ssl_key_source }}" "{{ prosody_ssl_key_dest }}"
+  notify: reload prosody config
+
+- name: Set good access to certs
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: prosody
+    mode: 0640
+  with_items:
+    - "{{ prosody_ssl_key_dest }}"
+    - "{{ prosody_ssl_cert_dest }}"
+
+- name: Enable and start prosody service
+  service: name=prosody enabled=yes state=started
