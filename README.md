@@ -13,7 +13,7 @@ A playbook for installing Prosody on Debian, with security in mind:
 Role Variables
 --------------
 
-TBD
+TBD.
 
 Example Playbook
 ----------------
