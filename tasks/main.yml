@@ -36,5 +36,5 @@
     - "{{ prosody_ssl_key_dest }}"
     - "{{ prosody_ssl_cert_dest }}"
 
-- name: Enable and start prosody service
-  service: name=prosody enabled=yes state=started
+- name: Enable and restart prosody service
+  service: name=prosody enabled=yes state=restarted
