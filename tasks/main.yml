@@ -16,8 +16,6 @@
     validate: "luac -p %s"
   notify: reload prosody config
 
-# TODO: Add a crontab entry to copy the certs periodically
-
 - name: Copy TLS cert to /etc/prosody/certs/
   command: /bin/cp "{{ prosody_ssl_cert_source }}" "{{ prosody_ssl_cert_dest }}"
   notify: reload prosody config
@@ -35,6 +33,17 @@
   with_items:
     - "{{ prosody_ssl_key_dest }}"
     - "{{ prosody_ssl_cert_dest }}"
+
+# Everyday at 4 AM
+
+- name: Install crontab for periodic copy of LetsEncypt certs
+  cron:
+    name: Copy LetsEncrypt certificates and restart
+    hour: 4
+    minute: 0
+    job: "cp {{ prosody_ssl_cert_source }} {{ prosody_ssl_cert_dest }} &&
+          cp {{ prosody_ssl_key_source }} {{ prosody_ssl_key_dest }} &&
+          systemctl restart prosody"
 
 - name: Enable and restart prosody service
   service: name=prosody enabled=yes state=restarted
