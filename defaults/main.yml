@@ -5,5 +5,5 @@ letsencrypt_domain: "{{ prosody_domain }}"
 prosody_ssl_cert_source: /etc/letsencrypt/live/{{ letsencrypt_domain }}/fullchain.pem
 prosody_ssl_key_source: /etc/letsencrypt/live/{{ letsencrypt_domain }}/privkey.pem
 
-prosody_ssl_cert_dest: /etc/prosody/certs/jabber.crt
-prosody_ssl_key_dest: /etc/prosody/certs/jabber.key
+prosody_ssl_cert_dest: /etc/prosody/certs/{{ prosody_domain }}.crt
+prosody_ssl_key_dest: /etc/prosody/certs/{{ prosody_domain }}.key
