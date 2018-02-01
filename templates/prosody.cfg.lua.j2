@@ -76,7 +76,7 @@ modules_enabled = {
 		--"watchregistrations"; -- Alert admins of registrations
 		--"motd"; -- Send a message to users when they log in
 		--"legacyauth"; -- Legacy authentication. Only used by some old clients and bots.
-		--"proxy65"; -- Enables a file transfer proxy service which clients behind NAT can use
+		"proxy65"; -- Enables a file transfer proxy service which clients behind NAT can use
 }
 
 -- These modules are auto-loaded, but should you want
@@ -216,3 +216,6 @@ VirtualHost "{{ prosody_domain }}"
 --
 --Component "gateway.example.com"
 --	component_secret = "password"
+
+Component "proxy.microjoe.org" "proxy65"
+	proxy65_address = "xmpp.microjoe.org"
