@@ -1,6 +1,11 @@
 ---
 # tasks file for MicroJoe.prosody
 
+- name: Install debian dependencies
+  apt:
+    name: apt-transport-https
+    state: present
+
 - name: Install official prosody repository's key
   apt_key:
     url: https://prosody.im/files/prosody-debian-packages.key
