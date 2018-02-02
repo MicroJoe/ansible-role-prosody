@@ -19,7 +19,7 @@
 - name: Install prosody package
   apt:
     name: prosody
-    state: present
+    state: latest
     update_cache: yes
 
 - name: Configure prosody
