@@ -207,6 +207,8 @@ VirtualHost "{{ prosody_domain }}"
 
 ---Set up a MUC (multi-user chat) room server on conference.example.com:
 --Component "conference.example.com" "muc"
+Component "proxy.{{ prosody_domain }}" "Proxy65"
+  proxy65_address = "{{ prosody_domain }}"
 
 ---Set up an external component (default component port is 5347)
 --
