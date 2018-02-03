@@ -7,3 +7,5 @@ prosody_ssl_key_source: /etc/letsencrypt/live/{{ letsencrypt_domain }}/privkey.p
 
 prosody_ssl_cert_dest: /etc/prosody/certs/{{ prosody_domain }}.crt
 prosody_ssl_key_dest: /etc/prosody/certs/{{ prosody_domain }}.key
+
+prosody_proxy_domain: proxy.{{ prosody_domain }}
