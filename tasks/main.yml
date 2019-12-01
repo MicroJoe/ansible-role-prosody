@@ -13,7 +13,7 @@
 
 - name: Install official prosody repository
   apt_repository:
-    repo: deb https://packages.prosody.im/debian stretch main
+    repo: deb https://packages.prosody.im/debian buster main
     state: present
 
 - name: Install prosody package
@@ -26,40 +26,19 @@
   template:
     src: prosody.cfg.lua.j2
     dest: /etc/prosody/prosody.cfg.lua
-    group: root
+    group: prosody
     owner: root
-    mode: 0755
+    mode: 0640
     validate: "luac -p %s"
   notify: reload prosody config
 
-- name: Copy TLS cert to /etc/prosody/certs/
-  command: /bin/cp "{{ prosody_ssl_cert_source }}" "{{ prosody_ssl_cert_dest }}"
-  notify: reload prosody config
-
-- name: Copy TLS key to /etc/prosody/certs/
-  command: /bin/cp "{{ prosody_ssl_key_source }}" "{{ prosody_ssl_key_dest }}"
-  notify: reload prosody config
-
-- name: Set good access to certs
-  file:
-    path: "{{ item }}"
-    owner: root
+- name: Copy cert hook script
+  template:
+    src: copy-prosody-cert.sh.j2
+    dest: /etc/letsencrypt/renewal-hooks/deploy/copy-prosody-cert.sh
     group: prosody
-    mode: 0640
-  with_items:
-    - "{{ prosody_ssl_key_dest }}"
-    - "{{ prosody_ssl_cert_dest }}"
-
-# Everyday at 4 AM
-
-- name: Install crontab for periodic copy of LetsEncypt certs
-  cron:
-    name: Copy LetsEncrypt certificates and restart
-    hour: 4
-    minute: 0
-    job: "cp {{ prosody_ssl_cert_source }} {{ prosody_ssl_cert_dest }} &&
-          cp {{ prosody_ssl_key_source }} {{ prosody_ssl_key_dest }} &&
-          systemctl restart prosody"
+    owner: root
+    mode: 0750
 
 - name: Enable and restart prosody service
   service: name=prosody enabled=yes state=restarted

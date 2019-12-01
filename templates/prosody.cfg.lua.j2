@@ -1,4 +1,4 @@
--- Prosody XMPP Server Configuration
+-- Prosody Example Configuration File
 --
 -- Information on configuring Prosody can be found on our
 -- website at https://prosody.im/doc/configure
@@ -9,7 +9,8 @@
 -- If there are any errors, it will let you know what and where
 -- they are, otherwise it will keep quiet.
 --
--- Good luck, and happy Jabbering!
+-- The only thing left to do is rename this file to remove the .dist ending, and fill in the
+-- blanks. Good luck, and happy Jabbering!
 
 
 ---------- Server-wide settings ----------
@@ -29,7 +30,9 @@ admins = { }
 -- Prosody will always look in its source directory for modules, but
 -- this option allows you to specify additional locations where Prosody
 -- will look for modules first. For community modules, see https://modules.prosody.im/
---plugin_paths = {}
+-- For a local administrator it's common to place local modifications
+-- under /usr/local/ hierarchy:
+plugin_paths = { "/usr/local/lib/prosody/modules" }
 
 -- This is the list of modules Prosody will load on startup.
 -- It looks for mod_modulename.lua in the plugins folder, so make sure that exists too.
@@ -45,10 +48,11 @@ modules_enabled = {
 
 	-- Not essential, but recommended
 		"carbons"; -- Keep multiple clients in sync
-		"pep"; -- Enables users to publish their mood, activity, playing music and more
+		"pep"; -- Enables users to publish their avatar, mood, activity, playing music and more
 		"private"; -- Private XML storage (for room bookmarks, etc.)
 		"blocklist"; -- Allow users to block communications with other users
-		"vcard"; -- Allow users to set vCards
+		"vcard4"; -- User profiles (stored in PEP)
+		"vcard_legacy"; -- Conversion between legacy vCard and PEP Avatar, vcard
 
 	-- Nice to have
 		"version"; -- Replies to server version requests
@@ -57,6 +61,7 @@ modules_enabled = {
 		"ping"; -- Replies to XMPP pings with pongs
 		"register"; -- Allow users to register on this server using a client and change passwords
 		--"mam"; -- Store messages in an archive and allow users to access it
+		--"csi_simple"; -- Simple Mobile optimizations
 
 	-- Admin interfaces
 		"admin_adhoc"; -- Allows administration via an XMPP client that supports ad-hoc commands
@@ -68,6 +73,7 @@ modules_enabled = {
 		--"http_files"; -- Serve static files from a directory over HTTP
 
 	-- Other specific functionality
+		"posix"; -- POSIX functionality, sends server to background, enables syslog, etc.
 		--"limits"; -- Enable bandwidth limiting for XMPP connections
 		--"groups"; -- Shared roster support
 		--"server_contact_info"; -- Publish contact information for this service
@@ -85,12 +91,22 @@ modules_disabled = {
 	-- "offline"; -- Store offline messages
 	-- "c2s"; -- Handle client connections
 	-- "s2s"; -- Handle server-to-server connections
-	-- "posix"; -- POSIX functionality, sends server to background, enables syslog, etc.
 }
 
 -- Disable account creation by default, for security
 -- For more information see https://prosody.im/doc/creating_accounts
 allow_registration = false
+
+-- Debian:
+--   Do not send the server to background, either systemd or start-stop-daemon take care of that.
+--
+daemonize = false;
+
+-- Debian:
+--   Please, don't change this option since /run/prosody/
+--   is one of the few directories Prosody is allowed to write to
+--
+pidfile = "/run/prosody/prosody.pid";
 
 -- Force clients to use encrypted connections? This option will
 -- prevent clients from authenticating unless they are using encryption.
@@ -99,16 +115,10 @@ c2s_require_encryption = true
 
 -- Force servers to use encrypted connections? This option will
 -- prevent servers from authenticating unless they are using encryption.
--- Note that this is different from authentication
 
 s2s_require_encryption = true
 
-
 -- Force certificate authentication for server-to-server connections?
--- This provides ideal security, but requires servers you communicate
--- with to support encryption AND present valid, trusted certificates.
--- NOTE: Your version of LuaSec must support certificate verification!
--- For more information see https://prosody.im/doc/s2s#security
 
 s2s_secure_auth = true
 
@@ -119,20 +129,13 @@ s2s_secure_auth = true
 
 --s2s_insecure_domains = { "insecure.example" }
 
--- Even if you leave s2s_secure_auth disabled, you can still require valid
+-- Even if you disable s2s_secure_auth, you can still require valid
 -- certificates for some domains by specifying a list here.
 
 --s2s_secure_domains = { "jabber.org" }
 
--- Required for init scripts and prosodyctl
-pidfile = "/var/run/prosody/prosody.pid"
-
 -- Select the authentication backend to use. The 'internal' providers
 -- use Prosody's configured data storage to store the authentication data.
--- To allow Prosody to offer secure authentication mechanisms to clients, the
--- default provider stores passwords in plaintext. If you do not trust your
--- server please see https://prosody.im/doc/modules/mod_auth_internal_hashed
--- for information about using the hashed backend.
 
 authentication = "internal_hashed"
 
@@ -141,7 +144,8 @@ authentication = "internal_hashed"
 -- through modules. An "sql" backend is included by default, but requires
 -- additional dependencies. See https://prosody.im/doc/storage for more info.
 
---storage = "sql" -- Default is "internal"
+--storage = "sql" -- Default is "internal" (Debian: "sql" requires one of the
+-- lua-dbi-sqlite3, lua-dbi-mysql or lua-dbi-postgresql packages to work)
 
 -- For the "sql" backend, you can uncomment *one* of the below to configure:
 --sql = { driver = "SQLite3", database = "prosody.sqlite" } -- Default. 'database' is the filename.
@@ -162,11 +166,16 @@ archive_expires_after = "1w" -- Remove archived messages after 1 week
 
 -- Logging configuration
 -- For advanced logging see https://prosody.im/doc/logging
+--
+-- Debian:
+--  Logs info and higher to /var/log
+--  Logs errors to syslog also
 log = {
-	info = "/var/log/prosody/prosody.log"; -- Change 'info' to 'debug' for verbose logging
+	-- Log files (change 'info' to 'debug' for debug logs):
+	info = "/var/log/prosody/prosody.log";
 	error = "/var/log/prosody/prosody.err";
-	-- "*syslog"; -- Uncomment this for logging to syslog
-	-- "*console"; -- Log to the console, useful for debugging with daemonize=false
+	-- Syslog:
+	{ levels = { "error" }; to = "syslog";  };
 }
 
 -- Uncomment to enable statistics
@@ -183,18 +192,22 @@ log = {
 -- Location of directory to find certificates in (relative to main config file):
 certificates = "certs"
 
-ssl = {
-	ciphers = "AES256+EECDH:AES256+EDH:!aNULL";
-	--dhparam = "/etc/prosody/certs/dhparam4096.pem";
-	options = {"no_sslv2", "no_sslv3", "no_ticket", "no_compression", "cipher_server_preference", "single_dh_use", "single_ecdh_use", "no_tlsv1", "no_tlsv1_1"}
-}
+-- HTTPS currently only supports a single certificate, specify it here:
+--https_certificate = "/etc/prosody/certs/localhost.crt"
 
 ----------- Virtual hosts -----------
 -- You need to add a VirtualHost entry for each domain you wish Prosody to serve.
 -- Settings under each VirtualHost entry apply *only* to that host.
+-- It's customary to maintain VirtualHost entries in separate config files
+-- under /etc/prosody/conf.d/ directory. Examples of such config files can
+-- be found in /etc/prosody/conf.avail/ directory.
 
---VirtualHost "localhost"
+------ Additional config files ------
+-- For organizational purposes you may prefer to add VirtualHost and
+-- Component definitions in their own config files. This line includes
+-- all config files in /etc/prosody/conf.d/
 
+-- VirtualHost "localhost"
 VirtualHost "{{ prosody_domain }}"
 
 --VirtualHost "example.com"
@@ -207,6 +220,8 @@ VirtualHost "{{ prosody_domain }}"
 
 ---Set up a MUC (multi-user chat) room server on conference.example.com:
 --Component "conference.example.com" "muc"
+--- Store MUC messages in an archive and allow users to access it
+--modules_enabled = { "muc_mam" }
 
 ---Set up an external component (default component port is 5347)
 --
@@ -216,6 +231,7 @@ VirtualHost "{{ prosody_domain }}"
 --
 --Component "gateway.example.com"
 --	component_secret = "password"
+Include "conf.d/*.cfg.lua"
 
 Component "proxy.microjoe.org" "proxy65"
 	proxy65_address = "xmpp.microjoe.org"
